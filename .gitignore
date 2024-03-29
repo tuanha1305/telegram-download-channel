@@ -163,3 +163,5 @@ config/config.toml
 
 .DS_Store
 *.session
+
+data/*
