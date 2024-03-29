@@ -1,0 +1,6 @@
+phone = "+84969391955"
+api_id = "21525971"
+api_hash = "232f307f9eeb94da4409cae502cf535f"
+target_channel_names = ["UI8.net premium", "UI8.net free download"]
+download_directory = "data"
+filter_extensions = [".zip"]
