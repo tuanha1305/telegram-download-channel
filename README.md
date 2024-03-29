@@ -1,11 +1,11 @@
 
 # Telegram Channel Downloader
 
-This project is a Python script that automatically downloads `.zip` files from specified Telegram channels. It uses the Telethon library to interact with Telegram's API, allowing users to search for channels by name and download all `.zip` files posted in those channels to a local directory.
+This project is a Python script that automatically downloads files from specified Telegram channels. It uses the Telethon library to interact with Telegram's API, allowing users to search for channels by name and download all `.zip` files posted in those channels to a local directory.
 
 ## Features
 
-- Download all `.zip` files from specified Telegram channels.
+- Download all files from specified Telegram channels.
 - Easy configuration via `config.toml` for API credentials and target channels.
 - Uses async/await for efficient file downloading.
 
@@ -38,6 +38,7 @@ api_id = "123456"
 api_hash = "abcdef1234567890abcdef987654321"
 target_channel_names = ["Example Channel 1", "Example Channel 2"]
 download_directory = "Downloaded_Files"
+filter_extensions = [".zip"]
 ```
 
 ## Usage
@@ -68,4 +69,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 Your Name - tuanictu97@gmail.com
 
-Project Link: [https://github.com/yourusername/telegram-channel-downloader](https://github.com/yourusername/telegram-channel-downloader)
+Project Link: [https://github.com/tuanha1305/telegram-download-channel.git](https://github.com/yourusername/telegram-channel-downloader)
