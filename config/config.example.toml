@@ -1,0 +1,6 @@
+phone = ""
+api_id = ""
+api_hash = ""
+target_channel_names = ["Channel 1", "Channel 2"]
+download_directory = "data"
+filter_extensions = [".zip"]
