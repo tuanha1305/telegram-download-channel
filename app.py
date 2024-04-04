@@ -52,8 +52,14 @@ class TelegramDownloader:
 
     async def download_file(self, message):
         for delay in create_exp_backoff_generator(self.max_retry_time):
+
+            if delay == self.max_retry_time:
+                _logger.error('Max retries exceeded download file: {}'.format(message))
+                break
+
             file_name = message.file.name
             file_path = os.path.join(self.download_dir, file_name)
+
             try:
                 # Check if the file exists and compare sizes
                 if os.path.exists(file_path):
@@ -71,7 +77,7 @@ class TelegramDownloader:
                 break  # Break the retry loop on successful download
             except Exception as e:
                 _logger.error(f'Error downloading {file_name}: {e}')
-                await asyncio.sleep(delay)  # Use asyncio.sleep for async delay
+            await asyncio.sleep(delay)  # Use asyncio.sleep for async delay
 
     async def download_files_from_channel(self, channel):
         tasks = set()
