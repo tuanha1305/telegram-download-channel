@@ -1,12 +1,15 @@
+import logging
 import time
 
 import backoff
 import toml
-from telethon import TelegramClient, events, sync
-from telethon.tl.types import InputPeerChannel, MessageMediaDocument
+from telethon import TelegramClient
+from telethon.tl.types import MessageMediaDocument
 from telethon.errors import SessionPasswordNeededError
 import os
 import asyncio
+
+_logger = logging.getLogger(__name__)
 
 _is_backoff_v2 = next(backoff.expo()) is None
 
@@ -23,6 +26,9 @@ class TelegramDownloader:
         self.client = TelegramClient(phone, api_id, api_hash)
         self.target_channels = target_channels
         self.download_dir = download_dir
+        if not os.path.exists(self.download_dir):
+            os.makedirs(self.download_dir)
+            _logger.info(f"Created directory: {self.download_dir}")
         self.phone = phone
         self.filter_extensions = tuple(filter_extensions)
         self.num_threads = num_threads
@@ -30,7 +36,7 @@ class TelegramDownloader:
 
     async def start(self):
         await self.client.start(self.phone)
-        print("Client Created")
+        _logger.info("Client Created")
         # Ensure authorization
         if not await self.client.is_user_authorized():
             await self.client.send_code_request(self.phone)
@@ -39,7 +45,7 @@ class TelegramDownloader:
             except SessionPasswordNeededError:
                 await self.client.sign_in(password=input('Password: '))
             except Exception as e:
-                print(f"Failed to authenticate: {e}")
+                _logger.info(f"Failed to authenticate: {e}")
                 return
         await self.process_channels()
 
@@ -52,12 +58,12 @@ class TelegramDownloader:
                     print(f'File {file_name} already exists. Removing and downloading a new copy.')
                     os.remove(file_path)
 
-                print(f'Downloading {file_name}')
+                _logger.info(f'Downloading {file_name}')
                 path = await message.download_media(file=self.download_dir)
-                print(f'Downloaded {path}')
+                _logger.info(f'Downloaded {path}')
                 break
             except Exception as e:
-                print(f'Error downloading {file_name}: {e}')
+                _logger.error(f'Error downloading {file_name}: {e}')
                 time.sleep(delay)
 
     async def download_files_from_channel(self, channel):
@@ -77,7 +83,7 @@ class TelegramDownloader:
     async def process_channels(self):
         async for dialog in self.client.iter_dialogs():
             if any(target_name.lower() in dialog.name.lower() for target_name in self.target_channels):
-                print(f'Found channel: {dialog.name}')
+                _logger.info(f'Found channel: {dialog.name}')
                 await self.download_files_from_channel(dialog.entity)
 
 
@@ -86,14 +92,14 @@ async def main():
     try:
         config = toml.load("config/config.toml")
     except Exception as e:
-        print(f'Failed to load config.toml: {e}')
+        _logger.error(f'Failed to load config.toml: {e}')
         exit(1)
 
     # validate config
     required_keys = ['phone', 'api_id', 'api_hash', 'target_channel_names', 'download_directory', 'filter_extensions']
     missing_keys = [key for key in required_keys if key not in config]
     if missing_keys:
-        print(f'Missing configuration keys: {", ".join(missing_keys)}')
+        _logger.error(f'Missing configuration keys: {", ".join(missing_keys)}')
         exit(1)
 
     download_directory = config['download_directory']
@@ -107,4 +113,21 @@ async def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger()
+
+    fh = logging.FileHandler('app.log')
+    fh.setLevel(logging.INFO)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+    # run main app
     asyncio.run(main())

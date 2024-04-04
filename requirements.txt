@@ -1,2 +1,3 @@
 toml~=0.10.2
 Telethon~=1.34.0
+backoff
