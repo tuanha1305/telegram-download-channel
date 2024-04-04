@@ -71,8 +71,10 @@ class TelegramDownloader:
                         _logger.info(f'File {file_name} exists but sizes differ. Removing and re-downloading.')
                         os.remove(file_path)
 
+                def progress_callback(current, total):
+                    print(f'Downloading {file_name}: {current}/{total} bytes ({(current / total) * 100:.1f}%)')
                 _logger.info(f'Downloading {file_name}')
-                path = await message.download_media(file=self.download_dir)
+                path = await message.download_media(file=self.download_dir, progress_callback=progress_callback)
                 _logger.info(f'Downloaded {path}')
                 break  # Break the retry loop on successful download
             except Exception as e:
