@@ -6,6 +6,7 @@ import toml
 from telethon import TelegramClient
 from telethon.tl.types import MessageMediaDocument
 from telethon.errors import SessionPasswordNeededError
+from telethon.errors import SessionExpiredError
 import os
 import asyncio
 
@@ -54,17 +55,23 @@ class TelegramDownloader:
             file_name = message.file.name
             file_path = os.path.join(self.download_dir, file_name)
             try:
+                # Check if the file exists and compare sizes
                 if os.path.exists(file_path):
-                    print(f'File {file_name} already exists. Removing and downloading a new copy.')
-                    os.remove(file_path)
+                    local_file_size = os.path.getsize(file_path)
+                    if local_file_size == message.file.size:
+                        _logger.info(f'File {file_name} already exists and is of the same size. Skipping download.')
+                        break  # Skip re-download
+                    else:
+                        _logger.info(f'File {file_name} exists but sizes differ. Removing and re-downloading.')
+                        os.remove(file_path)
 
                 _logger.info(f'Downloading {file_name}')
                 path = await message.download_media(file=self.download_dir)
                 _logger.info(f'Downloaded {path}')
-                break
+                break  # Break the retry loop on successful download
             except Exception as e:
                 _logger.error(f'Error downloading {file_name}: {e}')
-                time.sleep(delay)
+                await asyncio.sleep(delay)  # Use asyncio.sleep for async delay
 
     async def download_files_from_channel(self, channel):
         tasks = set()
@@ -81,10 +88,15 @@ class TelegramDownloader:
             await asyncio.wait(tasks)
 
     async def process_channels(self):
-        async for dialog in self.client.iter_dialogs():
-            if any(target_name.lower() in dialog.name.lower() for target_name in self.target_channels):
-                _logger.info(f'Found channel: {dialog.name}')
-                await self.download_files_from_channel(dialog.entity)
+        try:
+            async for dialog in self.client.iter_dialogs():
+                if any(target_name.lower() in dialog.name.lower() for target_name in self.target_channels):
+                    _logger.info(f'Found channel: {dialog.name}')
+                    await self.download_files_from_channel(dialog.entity)
+        except SessionExpiredError:
+            _logger.error('Session expired. Attempting to re-authenticate.')
+            await self.start()
+        _logger.info('Download complete!')
 
 
 async def main():
