@@ -116,7 +116,7 @@ async def main():
         exit(1)
 
     # validate config
-    required_keys = ['phone', 'api_id', 'api_hash', 'target_channel_names', 'download_directory', 'filter_extensions']
+    required_keys = ['phone', 'api_id', 'api_hash', 'target_channel_names', 'download_directory', 'filter_extensions', 'num_threads']
     missing_keys = [key for key in required_keys if key not in config]
     if missing_keys:
         _logger.error(f'Missing configuration keys: {", ".join(missing_keys)}')
@@ -128,7 +128,7 @@ async def main():
         os.makedirs(download_directory)
     downloader = TelegramDownloader(config['phone'], config['api_id'], config['api_hash'],
                                     config['target_channel_names'], config['download_directory'],
-                                    config['filter_extensions'])
+                                    config['filter_extensions'], config['num_threads'])
     await downloader.start()
 
 
